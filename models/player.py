@@ -1,20 +1,26 @@
-from models.entity import LivingEntity, Shoot
+from models.atac import Shoot
+from models.entity import LivingEntity
+from models.weapon import Pistol, Shotgun, Weapon
 
 
 class Player(LivingEntity):
-    def __init__(self, energy=350, *args, **kwargs) -> None:
+    def __init__(self, energy=350, **kwargs) -> None:
         super().__init__(**kwargs)
         self.energy = energy
         self._is_siting = False
         self._is_runing = False
         self.max_energy = energy
+        self.weapon_list = list[Weapon]
+        self.current_weapon = Shotgun(self)
 
-    def shoot(self) -> Shoot | None:
+    def set_weapon(self, weapon: Weapon) -> None:
+        self.current_weapon = weapon
+
+    def shoot(self) -> list[Shoot] | None:
         self.is_shooting = True
         self.shoot_position = self.direction
-        if self.timer is None:
-            self.set_timer(30)
-            return Shoot(direction=self.direction, position_x=self.position_x, position_y=self.position_y + 20, player_shoot=True)
+        if self.current_weapon.timer is None:
+            return self.current_weapon.shoot()
     
     def move(self) -> None:
         if self._is_runing:

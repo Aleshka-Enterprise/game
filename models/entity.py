@@ -52,13 +52,13 @@ class LivingEntity(BaseEntity):
     def direction_t(self):
         return self.direction
     
-
-class Shoot(BaseEntity):
-    def __init__(self, direction, position_x, position_y, player_shoot: bool, width=20, height=6, color=(0, 0, 250), speed=25) -> None:
-        super().__init__(direction, position_x, position_y, width, height, color, speed)
-        self.player_shoot = player_shoot
-        self.speed = speed
-    
-    def move(self):
-        return super().move()
-
+    def check_collision(self, projectiles: list[BaseEntity]) -> bool:
+        for projectile in projectiles:
+            if (projectile.position_x < self.position_x + self.width and
+                projectile.position_x + projectile.width > self.position_x and
+                projectile.position_y < self.position_y + self.height and
+                projectile.position_y + projectile.height > self.position_y):
+                projectiles.remove(projectile)
+                self.set_damage(projectile.damage)
+                return True
+        return False
