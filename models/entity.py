@@ -1,7 +1,7 @@
 from uuid import uuid4
 
 class BaseEntity:
-    def __init__(self, direction, position_x, position_y, width=20, height=6, color=((0, 0, 250)), damage=0, speed=0) -> None:
+    def __init__(self, direction, position_x, position_y, width=20, height=6, color=((0, 0, 250)), damage=0) -> None:
         self.direction = direction
         self.position_x = position_x
         self.position_y = position_y
@@ -9,19 +9,20 @@ class BaseEntity:
         self.height = height
         self.color = color
         self.damage = damage
-        self.speed = speed
+        self.speed = 0
 
     def update_position(self, position_x, position_y):
         self.position_x = position_x or self.position_x
         self.position_y = position_y or self.position_y
 
     def move(self):
-        self.position_x += self.speed * self.direction
+        if self.speed:
+            self.position_x += self.speed * self.direction
 
 
 class LivingEntity(BaseEntity):
-    def __init__(self, hp, direction, position_x, position_y, width=20, height=6, damage=0, speed=0, color=[0, 0, 0]) -> None:
-        super().__init__(direction, position_x, position_y, width, height, color, damage, speed)
+    def __init__(self, hp, direction, position_x, position_y, width=20, height=6, color=[0, 0, 0]) -> None:
+        super().__init__(direction, position_x, position_y, width, height, color)
         self.uuid: str = uuid4()
         self.hp: int = hp
         self.position_x: int = position_x

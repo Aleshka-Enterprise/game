@@ -1,14 +1,14 @@
 import pygame
 from models.atac import Shoot
+from models.monster import Monster, Zombie
 from models.player import Player
 from settings import keys
-from pygame.sprite import Group
 
-player = Player(hp=350, position_x=500, position_y=600, direction=1, height=100, width=50, color=[255, 0, 0], speed=10)
 shoot_list: list[Shoot] = []
-shoot_group = Group()
+entity_list: list[Monster] = []
+player = Player(hp=350, position_x=500, position_y=600, direction=1, height=100, width=50, color=[255, 0, 0])
+entity_list.append(Zombie(target=player, hp=350, position_x=1500, position_y=600, direction=1, height=100, width=50))
 
-# Основной игровой цикл
 running = True
 clock = pygame.time.Clock()
 
@@ -19,7 +19,6 @@ def check_pressed_keys(keys_list: dict[str, list[int]], pressed_keys) -> bool:
 
 def player_events(pressed_keys) -> None:
     """ Обработчик событй игрока """
-    players_shoots = list(filter(lambda shoot: shoot.player_shoot, shoot_list))
 
     # Обработчик движения игрока
     if player.position_x <= 1440 and check_pressed_keys(keys['right'], pressed_keys):
@@ -36,16 +35,23 @@ def player_events(pressed_keys) -> None:
     elif player.is_runing and player.energy < 10 or not run_key_presed:
         player.set_run(False)
 
-    # Обрабочик выстрелов игрока
-    if check_pressed_keys(keys['shoot'], pressed_keys) and len(players_shoots) < 3:
-        shoot = player.shoot()
-        if shoot:
-            for i in shoot:
-                shoot_list.append(i)
+    # Обрабочик выстрелов
+    if check_pressed_keys(keys['shoot'], pressed_keys):
+        shoots = player.shoot()
+        if shoots:
+            for shoot in shoots:
+                shoot_list.append(shoot)
+
+    # Обрабочик приседания
+    if check_pressed_keys(keys['dow'], pressed_keys) and not player._is_siting:
+        player.sit(True)
+    elif player._is_siting and not check_pressed_keys(keys['dow'], pressed_keys):
+        player.sit(False)
 
 def render_and_update(window: pygame.Surface) -> None:
     """ Отрисовка и обновление """
     weapon = player.current_weapon
+    player.set_energy(player.energy + 1)
 
     # Отрисовка локации
     pygame.draw.rect(window, (25, 150, 250), (0, 0, 1500, 800))
@@ -57,13 +63,16 @@ def render_and_update(window: pygame.Surface) -> None:
     pygame.draw.rect(window, (255, 30, 0), (1100, 50, player.hp, 40))
 
     # Отрисовка игрока
-    if (weapon.entity.direction == 1):
-        weapon_x = weapon.entity.position_x + (weapon.entity.width * weapon.entity.direction)
-    else:
-        weapon_x =  weapon.entity.position_x - weapon.width
-    weapon_y = weapon.entity.position_y + 20
+    if not player._is_siting:
+        if (weapon.entity.direction == 1):
+            ofset = 10 if not weapon.timer is None else 0
+            weapon_x = weapon.entity.position_x + (weapon.entity.width * weapon.entity.direction) - ofset
+        else:
+            ofset = 10 if not weapon.timer is None else 0
+            weapon_x =  weapon.entity.position_x - weapon.width + ofset
+        weapon_y = weapon.entity.position_y + 20
+        pygame.draw.rect(window, weapon.color, (weapon_x, weapon_y, weapon.width, weapon.height))
     pygame.draw.rect(window, player.color, (player.position_x, player.position_y, player.width, player.height))
-    pygame.draw.rect(window, weapon.color, (weapon_x, weapon_y, weapon.width, weapon.height))
 
     # Отрисовывает выстрелы
     for value in shoot_list:
@@ -75,9 +84,20 @@ def render_and_update(window: pygame.Surface) -> None:
     
     weapon.update_timer()
 
+    for monster in entity_list:
+        pygame.draw.rect(window, monster.color, (monster.position_x, monster.position_y, monster.width, monster.height))
+        monster.move()
 
+    for shoot in shoot_list:
+        for monster in entity_list:
+            is_damaged = shoot.check_collision(monster)
+            if (is_damaged):
+                shoot_list.remove(shoot)
+            if monster.hp < 0:
+                entity_list.remove(monster)
+
+# Основной игровой цикл
 while player.hp > 0 and running:
-    player.set_energy(player.energy + 1)
     window = pygame.display.set_mode((1500, 800))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -86,7 +106,6 @@ while player.hp > 0 and running:
     pressed_keys = pygame.key.get_pressed()
 
     player_events(pressed_keys)
-
     render_and_update(window)
 
     pygame.display.update()
