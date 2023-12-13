@@ -1,5 +1,6 @@
 import pygame
 import random
+from models.entity import Entity
 
 
 player = {
@@ -67,8 +68,10 @@ while HP > 0:
         player['position_x'] += 5 + (3 * int(not player['sits']))
         pos = 1
     if player['position_x'] >= 10 and check_pressed_keys(keys['left'], pressed_keys):
-            player['position_x'] -= 5 + (3 * int(not player['sits']))
-            pos = -1
+        player['position_x'] -= 5 + (3 * int(not player['sits']))
+        pos = -1
+        player['position_x'] -= 5 + (3 * int(not player['sits']))
+        pos = -1
 
     if player['position_x'] <= 1440:
         if pressed_keys[pygame.K_RIGHT] and pressed_keys[pygame.K_UP]:
